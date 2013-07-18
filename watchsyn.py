@@ -23,7 +23,7 @@ def fix_tapbutton():
 
 
 class SettingsWatcher(PollerTask):
-    INTERVAL = 0
+    INTERVAL = 5
     def fetch(self):
         return get_synclient_settings()
 
