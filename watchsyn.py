@@ -3,6 +3,15 @@ from sparts.tasks.poller import PollerTask
 from subprocess import Popen, PIPE
 import re
 
+CONFIG = {
+    'TapButton1': 0,
+    #'HorizHysteresis': 39,
+    #'VertHysteresis': 27,
+    'HorizHysteresis': 8,
+    'VertHysteresis': 7,
+}
+
+
 def get_synclient_settings():
     p = Popen(['/usr/bin/synclient', '-l'], shell=False, stdout=PIPE,
               stdin=open('/dev/null', mode='r'),
@@ -17,8 +26,8 @@ def get_synclient_settings():
         result[k.strip()] = float(v.strip())
     return result
 
-def fix_tapbutton():
-    p = Popen(['/usr/bin/synclient', 'TapButton1=0'])
+def synclient_set(key, value):
+    p = Popen(['/usr/bin/synclient', '%s=%s' % (key, value)])
     p.communicate()
 
 
@@ -34,9 +43,10 @@ class SettingsWatcher(PollerTask):
             new_item = new_value[k]
             if old_item != new_item:
                 self.logger.debug("%s changed from '%s' to '%s'", k, old_item, new_item)
-                if k == 'TapButton1' and new_item != 0:
-                    self.logger.info("Fixing TapButton1")
-                    fix_tapbutton()
+                if k in CONFIG:
+                    if new_item != CONFIG[k]:
+                        self.logger.info("Fixing %s", k)
+                        synclient_set(k, CONFIG[k])
 
 class MyService(VService):
     TASKS = [SettingsWatcher]
